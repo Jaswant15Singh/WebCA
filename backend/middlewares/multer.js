@@ -21,9 +21,7 @@ const createUploader = (
     destination: (_req, _file, cb) => cb(null, dest),
 
     filename: (req, file, cb) => {
-      const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      console.log("files uploaded",file);
-      
+      const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;      
       const ext = path.extname(file.originalname).toLowerCase();
       cb(null, `${unique}${ext}`);
     },
@@ -54,8 +52,8 @@ const clientUploader = createUploader("clients");
 
 const projectUploader = createUploader("projects");
 
-const uploadClientImage = clientUploader.single("image");
-const uploadClientImages = clientUploader.array("images", 10);
+const uploadClientImage = clientUploader.single("avatar_url");
+const uploadClientImages = clientUploader.array("avatar_url", 10);
 
 const uploadProjectImage = projectUploader.single("image");
 const uploadProjectImages = projectUploader.array("images", 10);

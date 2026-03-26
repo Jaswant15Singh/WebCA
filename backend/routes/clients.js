@@ -4,4 +4,6 @@ import clientControllers from "../controllers/clients.js";
 const router=express.Router();
 router.get("/get-clients", clientControllers.getClients);
 router.post("/add-client",uploadClientImage, clientControllers.addClient);
+router.get("/get-client/:client_id", clientControllers.getClientById);
+router.put("/update-client/:client_id",uploadClientImage, clientControllers.updateClient);
 export default router;
