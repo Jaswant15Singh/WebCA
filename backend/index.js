@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import DatabaseClass from "./db/db.js";
 import adminRoutes from "./routes/admin.js";
 import clientRoutes from "./routes/clients.js";
+import projectRoutes from "./routes/projects.js";
 import morgan from "morgan";
 import moment from "moment";
 import path from "path";
@@ -17,6 +18,7 @@ app.use(express.urlencoded({extended:true}))
 global.db=new DatabaseClass();
 app.use("/admin", adminRoutes);
 app.use("/clients", clientRoutes);
+app.use("/projects", projectRoutes);
 console.log(path.join("public"));
 
 app.listen(process.env.PORT,()=>{
