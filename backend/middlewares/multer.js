@@ -55,8 +55,8 @@ const projectUploader = createUploader("projects");
 const uploadClientImage = clientUploader.single("avatar_url");
 const uploadClientImages = clientUploader.array("avatar_url", 10);
 
-const uploadProjectImage = projectUploader.single("image");
-const uploadProjectImages = projectUploader.array("images", 10);
+const uploadProjectImage = projectUploader.single("cover_image_url");
+const uploadProjectImages = projectUploader.array("cover_image_url", 10);
 
 // const multerErrorHandler = (err, _req, res, next) => {
 //   if (err instanceof multer.MulterError) {
