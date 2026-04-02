@@ -1,8 +1,8 @@
 const projectsController = {
   getAllProjects: async (req, res) => {
     try {
-      const projects = await db.executeQuery("SELECT * FROM projects");
-      res.status(200).json(projects);
+      const projects = await db.executeQuery("SELECT p.*, pl.total_amount, pl.paid_amount, pl.pending_amount FROM projects p inner join project_logs pl on p.project_id = pl.project_id");
+      res.status(200).json(projects.rows);
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
     }
@@ -21,7 +21,7 @@ const projectsController = {
       deadline,
       budget,
       budget_currency,
-
+      paid_amount,
       brief,
     } = req.body;
     const cover_image_url = req.file ? `/uploads/${req.file.filename}` : null;
@@ -50,8 +50,10 @@ const projectsController = {
       }
 
     try {
+      const paidAmountValue = paid_amount ? parseFloat(paid_amount) : 0;
+      const remainingAmount = budget ? parseFloat(budget) - paidAmountValue : 0;
       const result = await db.executeQuery(
-        "INSERT INTO projects (title, description, client_id, owner_id, type, status, tags, start_date, deadline, budget, budget_currency, cover_image_url, brief) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+        "INSERT INTO projects (title, description, client_id, owner_id, type, status, tags, start_date, deadline, budget, budget_currency, cover_image_url, brief, remaining_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING project_id",
         [
           title,
           description,
@@ -66,13 +68,18 @@ const projectsController = {
           budget_currency,
           cover_image_url,
           brief,
+          remainingAmount
         ],
       );
+      
+      
+      await db.executeQuery('Insert into project_logs (project_id,total_amount,paid_amount) values ($1,$2,$3) ',[result[0].project_id,budget,paidAmountValue]);
+      await db.executeQuery('INSERT INTO invoice (project_id,client_id,total_amount,paid_amount,payment_date) values ($1,$2,$3,$4,NOW())',[result[0].project_id,client_id,budget,paidAmountValue]);
       res
         .status(201)
         .json({
           message: "Project added successfully",
-          projectId: result.insertId,
+          projectId: result[0].project_id,
         });
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
@@ -94,6 +101,7 @@ const projectsController = {
       budget,
       budget_currency,
       brief,
+      paid_amount
     } = req.body;
       const validTypes = ["fixed", "retainer", "hourly"];
       const validStatuses = [
@@ -120,13 +128,16 @@ const projectsController = {
       }
 
     try {
+     
       const existing = await db.executeQuery(
-        "SELECT * FROM projects WHERE project_id = $1",
+        "SELECT p.*, pl.total_amount, pl.paid_amount FROM projects p inner join project_logs pl on p.project_id = pl.project_id WHERE p.project_id = $1",
         [id],
       );
       if (existing.length === 0) {
         return res.status(404).json({ error: "Project not found" });
-      }
+      }      
+       const amount_left = existing[0].remaining_amount;
+       const remainingAmount =amount_left - (paid_amount ? parseFloat(paid_amount) : 0);       
       const current = existing[0];
       const avatar_url = req.file
         ? `/uploads/${req.file.filename}`
@@ -145,9 +156,11 @@ const projectsController = {
         budget_currency: budget_currency || current.budget_currency,
         cover_image_url: avatar_url,
         brief: brief || current.brief,
+        remaining_amount: remainingAmount || current.remaining_amount,  
       };
+      
       await db.executeQuery(
-        "UPDATE projects SET title = $1, description = $2, client_id = $3, owner_id = $4, type = $5, status = $6, tags = $7, start_date = $8, deadline = $9, budget = $10, budget_currency = $11, cover_image_url = $12, brief = $13 WHERE project_id = $14",
+        "UPDATE projects SET title = $1, description = $2, client_id = $3, owner_id = $4, type = $5, status = $6, tags = $7, start_date = $8, deadline = $9, budget = $10, budget_currency = $11, cover_image_url = $12, brief = $13, remaining_amount = $14,updated_at = NOW() WHERE project_id = $15",
         [
           title,
           description,
@@ -162,9 +175,16 @@ const projectsController = {
           budget_currency,
           avatar_url,
           brief,
-          id,
+          remainingAmount,
+          id
         ],
       );
+      
+      const paidAmountValue = paid_amount ? parseFloat(paid_amount) : 0;
+            await db.executeQuery(
+              "Insert into project_logs (project_id,total_amount,paid_amount) values ($1,$2,$3) ",
+              [id, budget, paidAmountValue],
+            );
       res.status(200).json({ message: "Project updated successfully" });
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
