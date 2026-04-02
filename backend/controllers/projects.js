@@ -179,7 +179,7 @@ const projectsController = {
           id
         ],
       );
-      
+      await db.executeQuery('INSERT INTO invoice (project_id,client_id,total_amount,paid_amount,payment_date) values ($1,$2,$3,$4,NOW())',[id,client_id,budget,paid_amount ? parseFloat(paid_amount) : 0]);
       const paidAmountValue = paid_amount ? parseFloat(paid_amount) : 0;
             await db.executeQuery(
               "Insert into project_logs (project_id,total_amount,paid_amount) values ($1,$2,$3) ",
@@ -190,6 +190,18 @@ const projectsController = {
       res.status(500).json({ error: "Internal server error" });
     }
   },
+  getProjectId:async(req,res)=>{
+    try {
+      const {project_id}=req.params;
+      const project=await db.executeQuery("SELECT * FROM projects WHERE project_id=$1",[project_id]);
+      if(project.length===0){
+        return res.status(404).json({error:"Project not found"});
+      }
+      res.status(200).json(project[0]);
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
 };
 
 export default projectsController;

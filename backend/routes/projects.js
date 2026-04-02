@@ -10,6 +10,7 @@ router.post(
   projectsController.addProject,
 );
 router.put("/update-project/:id", projectUploader.single("cover_image_url"), projectsController.updateProject);
+router.get("/get-project/:project_id", projectsController.getProjectId);
 // router.delete("/delete-project/:id", projectsController.deleteProject);
 
 export default router;

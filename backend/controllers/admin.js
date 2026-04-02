@@ -60,6 +60,21 @@ adminLogin: async function (req, res) {
     console.error("Error during admin login:", error);
     res.status(500).json({ error: "Internal server error" });
   }
+},
+
+adminInfo: async function(req,res){
+    try{
+      const {admin_id}=req.params;
+      const adminInfo=await db.executeQuery("SELECT admin_id,username FROM admins WHERE admin_id=$1",[admin_id]); 
+      if(adminInfo.length===0){
+        return res.status(404).json({error:"Admin not found"});
+      }
+      res.status(200).json(adminInfo[0]);
+    }
+    catch(error){
+      console.error("Error fetching admin info:", error);
+      res.status(500).json({ error: "Internal server error" });
+}
 }
 }
 

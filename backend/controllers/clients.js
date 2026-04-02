@@ -75,7 +75,27 @@ const clientControllers = {
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
     }   
+},
+
+deleteClient: async (req, res) => {
+    try {
+      const { client_id } = req.params; 
+      const existingClient = await db.executeQuery(
+        "SELECT * FROM clients WHERE client_id=$1",
+        [client_id],
+      );  
+      if (existingClient.length === 0) {
+        return res.status(404).json({ error: "Client not found" });
+      } 
+      await db.executeQuery(
+        "UPDATE clients SET is_active=False WHERE client_id=$1",
+        [client_id],
+      );
+      res.status(200).json({ message: "Client deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    } 
 }
-};
+}
 
 export default clientControllers;
