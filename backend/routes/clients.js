@@ -6,4 +6,5 @@ router.get("/get-clients", clientControllers.getClients);
 router.post("/add-client",uploadClientImage, clientControllers.addClient);
 router.get("/get-client/:client_id", clientControllers.getClientById);
 router.put("/update-client/:client_id",uploadClientImage, clientControllers.updateClient);
+router.delete("/delete-client/:client_id", clientControllers.deleteClient);
 export default router;
