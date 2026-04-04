@@ -1,0 +1,10 @@
+services:
+  backend:
+    container_name: backends
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:5000"
+    env_file:
+      - backend/.env
