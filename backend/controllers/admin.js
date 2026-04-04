@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 const adminControllers = {
   getAdmins: async function (req, res) {
-    const data = await db.executeQuery("SELECT * FROM dummy");
+    const data = await db.executeQuery("SELECT * FROM admins");
     res.json(data);
   },
    registerAdmin : async function (req, res) {

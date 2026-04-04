@@ -1,10 +1,11 @@
 import express from "express";
 import { uploadClientImage } from "../middlewares/multer.js";
 import clientControllers from "../controllers/clients.js";
+import authMiddleware from "../middlewares/auth.js";
 const router=express.Router();
-router.get("/get-clients", clientControllers.getClients);
-router.post("/add-client",uploadClientImage, clientControllers.addClient);
-router.get("/get-client/:client_id", clientControllers.getClientById);
-router.put("/update-client/:client_id",uploadClientImage, clientControllers.updateClient);
-router.delete("/delete-client/:client_id", clientControllers.deleteClient);
+router.get("/get-clients", authMiddleware, clientControllers.getClients);
+router.post("/add-client", authMiddleware, uploadClientImage, clientControllers.addClient);
+router.get("/get-client/:client_id", authMiddleware, clientControllers.getClientById);
+router.put("/update-client/:client_id", authMiddleware, uploadClientImage, clientControllers.updateClient);
+router.delete("/delete-client/:client_id", authMiddleware, clientControllers.deleteClient);
 export default router;
