@@ -34,6 +34,7 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd /home/ubuntu/webca/backend
+            cat touch.txt
             git pull origin main
             pm2 restart webca-backend
             pm2 save
