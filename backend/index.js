@@ -13,7 +13,6 @@ dotenv.config()
 const app=express();
 app.use(express.static(path.join(process.cwd(), "public")));
 app.use(morgan("dev"));
-// app.use(moment().format());
 app.use(express.json());
 app.use(express.urlencoded({extended:true}))
 global.db=new DatabaseClass();
@@ -23,5 +22,5 @@ app.use("/projects", projectRoutes);
 app.use("/invoice",invoiceRoutes)
 
 app.listen(process.env.PORT,()=>{
-    console.log(`Server is running on port ${process.env.PORT}`);
+    console.log(`Server is running on Port ${process.env.PORT}`);
 })
