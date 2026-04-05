@@ -22,5 +22,5 @@ app.use("/projects", projectRoutes);
 app.use("/invoice",invoiceRoutes)
 
 app.listen(process.env.PORT,()=>{
-    console.log(`Server is running on Port ${process.env.PORT}`);
+    console.log(`Server is running on port ${process.env.PORT}`);
 })
