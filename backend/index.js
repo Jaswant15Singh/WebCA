@@ -15,7 +15,9 @@ global.now = moment();
 const app=express();
 app.use(
   cors({
-    origin: "*",
+    origin: "*", 
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 app.use(express.static(path.join(process.cwd(), "public")));
