@@ -7,8 +7,9 @@ const adminControllers = {
     res.json(data);
   },
    registerAdmin : async function (req, res) {
+      console.log(req.body);
+
   const { username, password } = req.body;
-  
   if (!username || !password) {
     return res.status(400).json({ error: "All fields are required" });
   }
