@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 dotenv.config();
 import DatabaseClass from "./db/db.js";
 import adminRoutes from "./routes/admin.js";
@@ -12,6 +13,11 @@ import moment from "moment";
 import path from "path";
 global.now = moment();
 const app=express();
+app.use(
+  cors({
+    origin: "*",
+  }),
+);
 app.use(express.static(path.join(process.cwd(), "public")));
 app.use(morgan("dev"));
 app.use(express.json());
