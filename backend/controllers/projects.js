@@ -1,8 +1,8 @@
 const projectsController = {
   getAllProjects: async (req, res) => {
     try {
-      const projects = await db.executeQuery("SELECT p.*, pl.total_amount, pl.paid_amount, pl.pending_amount FROM projects p inner join project_logs pl on p.project_id = pl.project_id");
-      res.status(200).json(projects.rows);
+      const projects = await db.executeQuery("SELECT p.*, pl.total_amount, pl.paid_amount, pl.pending_amount FROM projects p inner join project_logs pl on p.project_id = pl.project_id WHERE COALESCE(p.status, '') <> 'cancelled' ORDER BY p.project_id DESC");
+      res.status(200).json(projects);
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
     }
@@ -162,28 +162,28 @@ const projectsController = {
       await db.executeQuery(
         "UPDATE projects SET title = $1, description = $2, client_id = $3, owner_id = $4, type = $5, status = $6, tags = $7, start_date = $8, deadline = $9, budget = $10, budget_currency = $11, cover_image_url = $12, brief = $13, remaining_amount = $14,updated_at = NOW() WHERE project_id = $15",
         [
-          title,
-          description,
-          client_id,
-          owner_id,
-          type,
-          status,
-          tags,
-          start_date,
-          deadline,
-          budget,
-          budget_currency,
-          avatar_url,
-          brief,
-          remainingAmount,
+          updatedProject.title,
+          updatedProject.description,
+          updatedProject.client_id,
+          updatedProject.owner_id,
+          updatedProject.type,
+          updatedProject.status,
+          updatedProject.tags,
+          updatedProject.start_date,
+          updatedProject.deadline,
+          updatedProject.budget,
+          updatedProject.budget_currency,
+          updatedProject.cover_image_url,
+          updatedProject.brief,
+          updatedProject.remaining_amount,
           id
         ],
       );
-      await db.executeQuery('INSERT INTO invoice (project_id,client_id,total_amount,paid_amount,payment_date) values ($1,$2,$3,$4,NOW())',[id,client_id,budget,paid_amount ? parseFloat(paid_amount) : 0]);
+      await db.executeQuery('INSERT INTO invoice (project_id,client_id,total_amount,paid_amount,payment_date) values ($1,$2,$3,$4,NOW())',[id,updatedProject.client_id,updatedProject.budget,paid_amount ? parseFloat(paid_amount) : 0]);
       const paidAmountValue = paid_amount ? parseFloat(paid_amount) : 0;
             await db.executeQuery(
               "Insert into project_logs (project_id,total_amount,paid_amount) values ($1,$2,$3) ",
-              [id, budget, paidAmountValue],
+              [id, updatedProject.budget, paidAmountValue],
             );
       res.status(200).json({ message: "Project updated successfully" });
     } catch (error) {
@@ -198,6 +198,28 @@ const projectsController = {
         return res.status(404).json({error:"Project not found"});
       }
       res.status(200).json(project[0]);
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+  deleteProject: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const existingProject = await db.executeQuery(
+        "SELECT * FROM projects WHERE project_id = $1",
+        [id],
+      );
+
+      if (existingProject.length === 0) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+
+      await db.executeQuery(
+        "UPDATE projects SET status = 'cancelled', updated_at = NOW() WHERE project_id = $1",
+        [id],
+      );
+
+      res.status(200).json({ message: "Project archived successfully" });
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
     }

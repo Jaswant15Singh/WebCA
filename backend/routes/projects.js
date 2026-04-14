@@ -13,6 +13,6 @@ router.post(
 );
 router.put("/update-project/:id", authMiddleware, projectUploader.single("cover_image_url"), projectsController.updateProject);
 router.get("/get-project/:project_id", authMiddleware, projectsController.getProjectId);
-// router.delete("/delete-project/:id", authMiddleware, projectsController.deleteProject);
+router.delete("/delete-project/:id", authMiddleware, projectsController.deleteProject);
 
 export default router;

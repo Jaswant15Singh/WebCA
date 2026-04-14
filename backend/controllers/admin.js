@@ -24,13 +24,18 @@ const adminControllers = {
     }
     const hashed = await bcrypt.hash(password, 10);
     const result = await db.executeQuery(
-      "INSERT INTO admins (username, password) VALUES ($1, $2)",
+      "INSERT INTO admins (username, password) VALUES ($1, $2) RETURNING admin_id, username",
       [username, hashed]
     );
-    res.status(201).json({ message: "Admin registered successfully", id: result.insertId });
+    res.status(201).json({
+      message: "Admin registered successfully",
+      admin: result[0],
+    });
   } catch (error) {
     console.error("Error registering admin:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      error: error.publicMessage || "Internal server error",
+    });
   }
 },
 
@@ -54,12 +59,26 @@ adminLogin: async function (req, res) {
     if (!isMatch) {
       return res.status(400).json({ error: "Invalid username or password" });
     } else {
-      const token = jwt.sign({ id: admin[0].id, username: admin[0].username }, process.env.JWT_SECRET, { expiresIn: "1h" });
-      res.json({ message: "Login successful", token });
+      const adminId = admin[0].admin_id ?? admin[0].id;
+      const token = jwt.sign(
+        { id: adminId, username: admin[0].username },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" },
+      );
+      res.json({
+        message: "Login successful",
+        token,
+        admin: {
+          admin_id: adminId,
+          username: admin[0].username,
+        },
+      });
     }
   } catch (error) {
     console.error("Error during admin login:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      error: error.publicMessage || "Internal server error",
+    });
   }
 },
 
@@ -74,7 +93,9 @@ adminInfo: async function(req,res){
     }
     catch(error){
       console.error("Error fetching admin info:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({
+        error: error.publicMessage || "Internal server error",
+      });
 }
 }
 }

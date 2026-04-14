@@ -1,7 +1,9 @@
 const clientControllers = {
   getClients: async (req, res) => {
     try {
-      const clients = await db.executeQuery("SELECT * FROM clients");
+      const clients = await db.executeQuery(
+        "SELECT * FROM clients WHERE COALESCE(is_active, TRUE) = TRUE ORDER BY client_id DESC",
+      );
       res.status(200).json(clients);
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
@@ -18,14 +20,14 @@ const clientControllers = {
           .json({ error: "Name, email, phone, and address are required" });
       }
       const result = await db.executeQuery(
-        "INSERT INTO clients (name, email, phone, address, avatar_url) VALUES ($1, $2, $3, $4, $5)",
+        "INSERT INTO clients (name, email, phone, address, avatar_url) VALUES ($1, $2, $3, $4, $5) RETURNING client_id",
         [name, email, phone, address, avatar_url || null],
       );
       res
         .status(201)
         .json({
           message: "Client added successfully",
-          clientId: result.insertId,
+          clientId: result[0].client_id,
         });
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
