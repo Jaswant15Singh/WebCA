@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client Hub - Login</title>
+    <link rel="stylesheet" href="/frontend/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="page">
+        <h1>Client Hub</h1>
+        <p>Admin login</p>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page">
+        <div class="message" data-message></div>
+
+        <section class="box auth-box">
+          <h2>Login</h2>
+          <p class="simple-text">Only admins can enter the dashboard.</p>
+
+          <form id="loginForm">
+            <div class="form-grid">
+              <label class="full">
+                Username
+                <input type="text" name="username" required />
+              </label>
+              <label class="full">
+                Password
+                <input type="password" name="password" required />
+              </label>
+            </div>
+
+            <div class="button-row">
+              <button type="submit">Login</button>
+            </div>
+          </form>
+
+          <p class="simple-text">
+            Need a new admin account?
+            <a href="/frontend/signup.html">Go to signup</a>
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <script src="/frontend/shared.js"></script>
+    <script src="/frontend/login.js"></script>
+  </body>
+</html>
