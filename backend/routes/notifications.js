@@ -1,7 +1,8 @@
 import express from 'express';
 const router = express.Router();
 import notificationController from '../controllers/notifications.js';
-router.get("/all-notifications/:admin_id",notificationController.getNotifications);
-router.get("/due-projects/:admin_id",notificationController.dueProjects);
+import authMiddleware from "../middlewares/auth.js";
+router.get("/all-notifications/:admin_id", authMiddleware, notificationController.getNotifications);
+router.get("/due-projects/:admin_id", authMiddleware, notificationController.dueProjects);
 
 export default router;

@@ -1,6 +1,11 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicDir = path.resolve(__dirname, "..", "public");
 
 const ensureDir = (dirPath) => {
   if (!fs.existsSync(dirPath)) {
@@ -14,7 +19,7 @@ const createUploader = (
   mimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"],
   maxSizeMB = 5,
 ) => {
-  const dest = path.join("public", "uploads", folder);
+  const dest = path.join(publicDir, "uploads", folder);
   ensureDir(dest);
 
   const storage = multer.diskStorage({
