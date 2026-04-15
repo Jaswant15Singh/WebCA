@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client Hub - Invoices</title>
+    <link rel="stylesheet" href="/frontend/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="page">
+        <h1>Client Hub</h1>
+        <p data-auth-text>Not logged in</p>
+        <nav class="nav">
+          <a href="/frontend/dashboard.html">Dashboard</a>
+          <a href="/frontend/clients.html">Clients</a>
+          <a href="/frontend/projects.html">Projects</a>
+          <a href="/frontend/invoices.html" class="active">Invoices</a>
+          <a href="/frontend/notifications.html">Notifications</a>
+          <button type="button" data-logout>Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page">
+        <div class="message" data-message></div>
+
+        <section class="box">
+          <h2>Invoices</h2>
+          <p class="simple-text">This page only shows invoice data for logged in admins.</p>
+          <div class="button-row">
+            <button type="button" id="refreshInvoices">Refresh</button>
+          </div>
+        </section>
+
+        <section class="box">
+          <table>
+            <thead>
+              <tr>
+                <th>Invoice ID</th>
+                <th>Client</th>
+                <th>Project</th>
+                <th>Total</th>
+                <th>Paid</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="invoiceTableBody"></tbody>
+          </table>
+        </section>
+      </div>
+    </main>
+
+    <script src="/frontend/shared.js"></script>
+    <script src="/frontend/invoices.js"></script>
+  </body>
+</html>

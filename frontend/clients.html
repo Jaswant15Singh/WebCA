@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client Hub - Clients</title>
+    <link rel="stylesheet" href="/frontend/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="page">
+        <h1>Client Hub</h1>
+        <p data-auth-text>Not logged in</p>
+        <nav class="nav">
+          <a href="/frontend/dashboard.html">Dashboard</a>
+          <a href="/frontend/clients.html" class="active">Clients</a>
+          <a href="/frontend/projects.html">Projects</a>
+          <a href="/frontend/invoices.html">Invoices</a>
+          <a href="/frontend/notifications.html">Notifications</a>
+          <button type="button" data-logout>Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page">
+        <div class="message" data-message></div>
+
+        <div class="two-column">
+          <section class="box">
+            <h2>Client form</h2>
+            <p class="simple-text">This page uses the client CRUD backend routes.</p>
+
+            <form id="clientForm">
+              <input type="hidden" name="client_id" />
+              <div class="form-grid">
+                <label>
+                  Name
+                  <input type="text" name="name" required />
+                </label>
+                <label>
+                  Email
+                  <input type="email" name="email" required />
+                </label>
+                <label>
+                  Phone
+                  <input type="text" name="phone" required />
+                </label>
+                <label class="full">
+                  Address
+                  <textarea name="address" required></textarea>
+                </label>
+                <label class="full">
+                  Avatar image
+                  <input type="file" name="avatar_url" accept="image/*" />
+                </label>
+              </div>
+
+              <div class="button-row">
+                <button type="submit">Save client</button>
+                <button type="button" id="clearClientForm" class="secondary">Clear</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="box">
+            <h2>Client list</h2>
+            <div class="button-row">
+              <button type="button" id="refreshClients">Refresh</button>
+            </div>
+            <div id="clientList" class="list"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script src="/frontend/shared.js"></script>
+    <script src="/frontend/clients.js"></script>
+  </body>
+</html>

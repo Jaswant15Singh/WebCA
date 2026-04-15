@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client Hub - Dashboard</title>
+    <link rel="stylesheet" href="/frontend/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="page">
+        <h1>Client Hub</h1>
+        <p data-auth-text>Not logged in</p>
+        <nav class="nav">
+          <a href="/frontend/dashboard.html" class="active">Dashboard</a>
+          <a href="/frontend/clients.html">Clients</a>
+          <a href="/frontend/projects.html">Projects</a>
+          <a href="/frontend/invoices.html">Invoices</a>
+          <a href="/frontend/notifications.html">Notifications</a>
+          <button type="button" data-logout>Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page">
+        <div class="message" data-message></div>
+
+        <section class="box">
+          <h2>Dashboard</h2>
+          <p class="simple-text">This page is only for logged in admins. Use the links below to manage the system section by section.</p>
+        </section>
+
+        <section class="cards">
+          <div class="card">
+            <span>Clients</span>
+            <strong id="clientCount">0</strong>
+          </div>
+          <div class="card">
+            <span>Projects</span>
+            <strong id="projectCount">0</strong>
+          </div>
+          <div class="card">
+            <span>Invoices</span>
+            <strong id="invoiceCount">0</strong>
+          </div>
+          <div class="card">
+            <span>Reminders</span>
+            <strong id="notificationCount">0</strong>
+          </div>
+        </section>
+
+        <section class="link-cards" style="margin-top: 18px;">
+          <a class="link-card" href="/frontend/clients.html">
+            <h3>Clients</h3>
+            <p>Add, update and archive client records.</p>
+          </a>
+          <a class="link-card" href="/frontend/projects.html">
+            <h3>Projects</h3>
+            <p>Create and track project work.</p>
+          </a>
+          <a class="link-card" href="/frontend/invoices.html">
+            <h3>Invoices</h3>
+            <p>Check invoice totals and paid amounts.</p>
+          </a>
+          <a class="link-card" href="/frontend/notifications.html">
+            <h3>Notifications</h3>
+            <p>See upcoming deadlines and overdue projects.</p>
+          </a>
+        </section>
+      </div>
+    </main>
+
+    <script src="/frontend/shared.js"></script>
+    <script src="/frontend/dashboard.js"></script>
+  </body>
+</html>
