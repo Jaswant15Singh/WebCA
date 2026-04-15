@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client Hub - Notifications</title>
+    <link rel="stylesheet" href="/frontend/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="page">
+        <h1>Client Hub</h1>
+        <p data-auth-text>Not logged in</p>
+        <nav class="nav">
+          <a href="/frontend/dashboard.html">Dashboard</a>
+          <a href="/frontend/clients.html">Clients</a>
+          <a href="/frontend/projects.html">Projects</a>
+          <a href="/frontend/invoices.html">Invoices</a>
+          <a href="/frontend/notifications.html" class="active">Notifications</a>
+          <button type="button" data-logout>Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page">
+        <div class="message" data-message></div>
+
+        <div class="two-column">
+          <section class="box">
+            <h2>Upcoming deadlines</h2>
+            <div class="button-row">
+              <button type="button" id="refreshNotifications">Refresh</button>
+            </div>
+            <div id="upcomingList" class="list"></div>
+          </section>
+
+          <section class="box">
+            <h2>Overdue projects</h2>
+            <div id="dueList" class="list"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script src="/frontend/shared.js"></script>
+    <script src="/frontend/notifications.js"></script>
+  </body>
+</html>
