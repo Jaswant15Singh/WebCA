@@ -1,6 +1,6 @@
 const notificationController = {
   getNotifications: async (req, res) => {
-    const { admin_id } = req.params;
+    const admin_id = req.admin.id;
     try {
       const notifications = await db.executeQuery(
         `SELECT 
@@ -24,7 +24,7 @@ const notificationController = {
   },
 
   dueProjects: async (req, res) => {
-    const { admin_id } = req.params;
+    const admin_id = req.admin.id;
     try {
       const dueProjects = await db.executeQuery(
         `SELECT 

@@ -74,6 +74,44 @@
       </div>
     </main>
 
+    <div class="modal-backdrop" id="editClientModal">
+      <div class="modal-box">
+        <h2>Edit client</h2>
+        <p class="simple-text">Update the client details and save the changes.</p>
+
+        <form id="editClientForm">
+          <input type="hidden" name="client_id" />
+          <div class="form-grid">
+            <label>
+              Name
+              <input type="text" name="name" required />
+            </label>
+            <label>
+              Email
+              <input type="email" name="email" required />
+            </label>
+            <label>
+              Phone
+              <input type="text" name="phone" required />
+            </label>
+            <label class="full">
+              Address
+              <textarea name="address" required></textarea>
+            </label>
+            <label class="full">
+              Avatar image
+              <input type="file" name="avatar_url" accept="image/*" />
+            </label>
+          </div>
+
+          <div class="button-row end">
+            <button type="button" id="cancelClientEdit" class="secondary">Cancel</button>
+            <button type="submit">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script src="/frontend/shared.js"></script>
     <script src="/frontend/clients.js"></script>
   </body>

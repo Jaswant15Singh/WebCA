@@ -1,45 +1,94 @@
-import { get } from "http";
+import PDFDocument from "pdfkit";
 
 const invoiceController = {
   getAllInvoices: async (req, res) => {
     try {
+      const ownerId = req.admin.id;
       const invoices = await db.executeQuery(
-        "Select i.invoice_id ,i.total_amount,i.paid_amount,c.name,p.title,i.payment_date from invoice i inner join clients c on i.client_id = c.client_id inner join projects p on i.project_id = p.project_id",
+        "SELECT i.invoice_id, i.total_amount, i.paid_amount, c.name, p.title, i.payment_date, p.project_id, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE p.owner_id = $1 ORDER BY i.invoice_id DESC",
+        [ownerId],
       );
       res.status(200).json(invoices);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching invoices" });
+      res.status(500).json({ message: error.publicMessage || "Error fetching invoices" });
     }
   },
 
   getInvoiceByProjects: async (req, res) => {
+    const ownerId = req.admin.id;
     const { id } = req.params;
     try {
       const invoice = await db.executeQuery(
-        "Select i.invoice_id ,i.total_amount,i.paid_amount,c.name,p.title,i.payment_date from invoice i inner join clients c on i.client_id = c.client_id inner join projects p on i.project_id = p.project_id where i.project_id=$1",
-        [id],
+        "SELECT i.invoice_id, i.total_amount, i.paid_amount, c.name, p.title, i.payment_date, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.project_id = $1 AND p.owner_id = $2 ORDER BY i.invoice_id DESC",
+        [id, ownerId],
       );
       if (invoice.length === 0) {
         return res.status(404).json({ message: "Invoice not found" });
       }
       res.status(200).json(invoice);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching invoice" });
+      res.status(500).json({ message: error.publicMessage || "Error fetching invoice" });
     }
   },
   getInvoiceById: async (req, res) => {
+    const ownerId = req.admin.id;
     const { id } = req.params;
     try {
       const invoice = await db.executeQuery(
-        "Select i.invoice_id ,i.total_amount,i.paid_amount,c.name,p.title,i.payment_date from invoice i inner join clients c on i.client_id = c.client_id inner join projects p on i.project_id = p.project_id where i.invoice_id=$1",
-        [id],
+        "SELECT i.invoice_id, i.total_amount, i.paid_amount, c.name, p.title, i.payment_date, p.project_id, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.invoice_id = $1 AND p.owner_id = $2",
+        [id, ownerId],
       );
       if (invoice.length === 0) {
         return res.status(404).json({ message: "Invoice not found" });
       }
       res.status(200).json(invoice[0]);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching invoice" });
+      res.status(500).json({ message: error.publicMessage || "Error fetching invoice" });
+    }
+  },
+  downloadInvoicePdf: async (req, res) => {
+    const ownerId = req.admin.id;
+    const { id } = req.params;
+
+    try {
+      const invoice = await db.executeQuery(
+        "SELECT i.invoice_id, i.total_amount, i.paid_amount, i.payment_date, c.name AS client_name, c.email AS client_email, p.title AS project_title, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.invoice_id = $1 AND p.owner_id = $2",
+        [id, ownerId],
+      );
+
+      if (invoice.length === 0) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+
+      const item = invoice[0];
+      const doc = new PDFDocument({ margin: 50 });
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=invoice-${item.invoice_id}.pdf`,
+      );
+
+      doc.pipe(res);
+
+      doc.fontSize(24).text("Client Hub Invoice", { underline: true });
+      doc.moveDown();
+      doc.fontSize(12).text(`Invoice ID: ${item.invoice_id}`);
+      doc.text(`Project: ${item.project_title}`);
+      doc.text(`Client: ${item.client_name}`);
+      doc.text(`Client Email: ${item.client_email || "Not provided"}`);
+      doc.text(`Payment Date: ${new Date(item.payment_date).toLocaleDateString("en-IE")}`);
+      doc.moveDown();
+      doc.text(`Total Amount: ${item.total_amount} ${item.budget_currency || "EUR"}`);
+      doc.text(`Paid Amount: ${item.paid_amount} ${item.budget_currency || "EUR"}`);
+      doc.text(
+        `Remaining Amount: ${Math.max(Number(item.total_amount || 0) - Number(item.paid_amount || 0), 0)} ${item.budget_currency || "EUR"}`,
+      );
+      doc.moveDown();
+      doc.text("Generated by Client Hub");
+      doc.end();
+    } catch (error) {
+      res.status(500).json({ message: error.publicMessage || "Error downloading invoice" });
     }
   },
 };

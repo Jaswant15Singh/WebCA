@@ -9,10 +9,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const list = document.getElementById("clientList");
   const clearButton = document.getElementById("clearClientForm");
   const refreshButton = document.getElementById("refreshClients");
+  const editModal = document.getElementById("editClientModal");
+  const editForm = document.getElementById("editClientForm");
+  const cancelEditButton = document.getElementById("cancelClientEdit");
 
   const resetForm = () => {
     form.reset();
     form.elements.client_id.value = "";
+  };
+
+  const openEditModal = () => {
+    editModal.classList.add("open");
+  };
+
+  const closeEditModal = () => {
+    editModal.classList.remove("open");
+    editForm.reset();
+    editForm.elements.client_id.value = "";
   };
 
   const renderClients = (clients) => {
@@ -35,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <p>${client.address}</p>
             <div class="button-row">
               <button type="button" class="secondary" data-edit="${client.client_id}">Edit</button>
-              <button type="button" class="danger" data-delete="${client.client_id}">Archive</button>
+              <button type="button" class="danger" data-delete="${client.client_id}">Delete</button>
             </div>
           </div>
         `,
@@ -82,12 +95,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (editId) {
       try {
         const client = await ClientHub.apiRequest(`/clients/get-client/${editId}`);
-        form.elements.client_id.value = client.client_id;
-        form.elements.name.value = client.name || "";
-        form.elements.email.value = client.email || "";
-        form.elements.phone.value = client.phone || "";
-        form.elements.address.value = client.address || "";
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        editForm.elements.client_id.value = client.client_id;
+        editForm.elements.name.value = client.name || "";
+        editForm.elements.email.value = client.email || "";
+        editForm.elements.phone.value = client.phone || "";
+        editForm.elements.address.value = client.address || "";
+        openEditModal();
       } catch (error) {
         ClientHub.showMessage(error.message, "error");
       }
@@ -95,11 +108,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (deleteId) {
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this client?",
+      );
+      if (!confirmed) {
+        return;
+      }
+
       try {
         await ClientHub.apiRequest(`/clients/delete-client/${deleteId}`, {
           method: "DELETE",
         });
-        ClientHub.showMessage("Client archived successfully.", "success");
+        ClientHub.showMessage("Client deleted successfully.", "success");
         await loadClients();
       } catch (error) {
         ClientHub.showMessage(error.message, "error");
@@ -109,6 +129,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
   clearButton.addEventListener("click", resetForm);
   refreshButton.addEventListener("click", loadClients);
+  cancelEditButton.addEventListener("click", closeEditModal);
+  editModal.addEventListener("click", (event) => {
+    if (event.target === editModal) {
+      closeEditModal();
+    }
+  });
+
+  editForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    ClientHub.clearMessage();
+
+    const clientId = editForm.elements.client_id.value;
+
+    try {
+      await ClientHub.apiRequest(`/clients/update-client/${clientId}`, {
+        method: "PUT",
+        body: ClientHub.createFormData(editForm),
+      });
+
+      closeEditModal();
+      ClientHub.showMessage("Client updated successfully.", "success");
+      await loadClients();
+    } catch (error) {
+      ClientHub.showMessage(error.message, "error");
+    }
+  });
 
   loadClients();
 });

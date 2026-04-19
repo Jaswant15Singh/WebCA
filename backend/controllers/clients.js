@@ -1,17 +1,20 @@
 const clientControllers = {
   getClients: async (req, res) => {
     try {
+      const ownerId = req.admin.id;
       const clients = await db.executeQuery(
-        "SELECT * FROM clients WHERE COALESCE(is_active, TRUE) = TRUE ORDER BY client_id DESC",
+        "SELECT * FROM clients WHERE owner_id = $1 AND COALESCE(is_active, TRUE) = TRUE ORDER BY client_id DESC",
+        [ownerId],
       );
       res.status(200).json(clients);
     } catch (error) {
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ error: error.publicMessage || "Internal server error" });
     }
   },
 
   addClient: async (req, res) => {
     try {
+      const ownerId = req.admin.id;
       const { name, email, phone, address } = req.body;
       const avatar_url = req.file ? `/uploads/clients/${req.file.filename}` : null;
       if (!name || !email || !phone || !address) {
@@ -20,8 +23,8 @@ const clientControllers = {
           .json({ error: "Name, email, phone, and address are required" });
       }
       const result = await db.executeQuery(
-        "INSERT INTO clients (name, email, phone, address, avatar_url) VALUES ($1, $2, $3, $4, $5) RETURNING client_id",
-        [name, email, phone, address, avatar_url || null],
+        "INSERT INTO clients (owner_id, name, email, phone, address, avatar_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING client_id",
+        [ownerId, name, email, phone, address, avatar_url || null],
       );
       res
         .status(201)
@@ -30,34 +33,36 @@ const clientControllers = {
           clientId: result[0].client_id,
         });
     } catch (error) {
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ error: error.publicMessage || "Internal server error" });
     }
   },
 
   getClientById: async (req, res) => {
     try {
+      const ownerId = req.admin.id;
       const { client_id } = req.params;
       const client = await db.executeQuery(
-        "SELECT * FROM clients WHERE client_id=$1",
-        [client_id],
+        "SELECT * FROM clients WHERE client_id=$1 AND owner_id = $2",
+        [client_id, ownerId],
       );
       if (client.length === 0) {
         return res.status(404).json({ error: "Client not found" });
       }
       res.status(200).json(client[0]);
     } catch (error) {
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ error: error.publicMessage || "Internal server error" });
     }
   },
   
   updateClient: async (req, res) => {
+    const ownerId = req.admin.id;
     const { client_id } = req.params;
     const { name, email, phone, address } = req.body;
     const avatar_url = req.file ? `/uploads/clients/${req.file.filename}` : null;   
     try {
       const existingClient = await db.executeQuery(
-        "SELECT * FROM clients WHERE client_id=$1",
-        [client_id],
+        "SELECT * FROM clients WHERE client_id=$1 AND owner_id = $2",
+        [client_id, ownerId],
       );    
         if (existingClient.length === 0) {
             return res.status(404).json({ error: "Client not found" });
@@ -75,27 +80,28 @@ const clientControllers = {
       );
       res.status(200).json({ message: "Client updated successfully" });
     } catch (error) {
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ error: error.publicMessage || "Internal server error" });
     }   
 },
 
 deleteClient: async (req, res) => {
     try {
+      const ownerId = req.admin.id;
       const { client_id } = req.params; 
       const existingClient = await db.executeQuery(
-        "SELECT * FROM clients WHERE client_id=$1",
-        [client_id],
+        "SELECT * FROM clients WHERE client_id=$1 AND owner_id = $2",
+        [client_id, ownerId],
       );  
       if (existingClient.length === 0) {
         return res.status(404).json({ error: "Client not found" });
       } 
       await db.executeQuery(
-        "UPDATE clients SET is_active=False WHERE client_id=$1",
-        [client_id],
+        "DELETE FROM clients WHERE client_id=$1 AND owner_id = $2",
+        [client_id, ownerId],
       );
       res.status(200).json({ message: "Client deleted successfully" });
     } catch (error) {
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ error: error.publicMessage || "Internal server error" });
     } 
 }
 }
