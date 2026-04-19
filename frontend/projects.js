@@ -10,6 +10,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearButton = document.getElementById("clearProjectForm");
   const refreshButton = document.getElementById("refreshProjects");
   const clientSelect = document.getElementById("clientSelect");
+  const editModal = document.getElementById("editProjectModal");
+  const editForm = document.getElementById("editProjectForm");
+  const editClientSelect = document.getElementById("editClientSelect");
+  const cancelEditButton = document.getElementById("cancelProjectEdit");
+  const editTotalAmountText = document.getElementById("editTotalAmountText");
+  const editAlreadyPaidText = document.getElementById("editAlreadyPaidText");
+  const editRemainingAmountText = document.getElementById("editRemainingAmountText");
+  const editAlreadyPaidInput = document.getElementById("editAlreadyPaidInput");
+  const editRemainingAmountInput = document.getElementById("editRemainingAmountInput");
+  let cachedClients = [];
+  let currentAlreadyPaid = 0;
 
   const resetForm = () => {
     form.reset();
@@ -20,17 +31,51 @@ document.addEventListener("DOMContentLoaded", () => {
     form.elements.paid_amount.value = "0";
   };
 
+  const populateClientSelect = (selectElement) => {
+    selectElement.innerHTML =
+      '<option value="">Select client</option>' +
+      cachedClients
+        .map((client) => `<option value="${client.client_id}">${client.name}</option>`)
+        .join("");
+  };
+
   const loadClientOptions = async () => {
     try {
-      const clients = await ClientHub.apiRequest("/clients/get-clients");
-      clientSelect.innerHTML =
-        '<option value="">Select client</option>' +
-        clients
-          .map((client) => `<option value="${client.client_id}">${client.name}</option>`)
-          .join("");
+      cachedClients = await ClientHub.apiRequest("/clients/get-clients");
+      populateClientSelect(clientSelect);
+      populateClientSelect(editClientSelect);
     } catch (error) {
       ClientHub.showMessage(error.message, "error");
     }
+  };
+
+  const openEditModal = () => {
+    editModal.classList.add("open");
+  };
+
+  const closeEditModal = () => {
+    editModal.classList.remove("open");
+    editForm.reset();
+    editForm.elements.project_id.value = "";
+    currentAlreadyPaid = 0;
+    editAlreadyPaidInput.value = "0";
+    editRemainingAmountInput.value = "0";
+    editTotalAmountText.textContent = "0";
+    editAlreadyPaidText.textContent = "0";
+    editRemainingAmountText.textContent = "0";
+  };
+
+  const updateAmountPreview = () => {
+    const totalAmount = Number(editForm.elements.budget.value || 0);
+    const newPaidAmount = Number(editForm.elements.paid_amount.value || 0);
+    const currency = editForm.elements.budget_currency.value || "EUR";
+    const remainingAmount = Math.max(totalAmount - currentAlreadyPaid - newPaidAmount, 0);
+
+    editAlreadyPaidInput.value = currentAlreadyPaid.toFixed(2);
+    editRemainingAmountInput.value = remainingAmount.toFixed(2);
+    editTotalAmountText.textContent = ClientHub.formatCurrency(totalAmount, currency);
+    editAlreadyPaidText.textContent = ClientHub.formatCurrency(currentAlreadyPaid, currency);
+    editRemainingAmountText.textContent = ClientHub.formatCurrency(remainingAmount, currency);
   };
 
   const renderProjects = (projects) => {
@@ -55,11 +100,11 @@ document.addEventListener("DOMContentLoaded", () => {
               <span class="tag">${ClientHub.formatCurrency(project.budget, project.budget_currency)}</span>
             </div>
             <p>${project.description || "No description added."}</p>
-            <p class="simple-text">Client ID: ${project.client_id} | Deadline: ${ClientHub.formatDate(project.deadline)}</p>
+            <p class="simple-text">Client: ${project.client_name || project.client_id} | Deadline: ${ClientHub.formatDate(project.deadline)}</p>
             <p class="simple-text">Paid: ${ClientHub.formatCurrency(project.paid_amount, project.budget_currency)} | Remaining: ${ClientHub.formatCurrency(project.remaining_amount, project.budget_currency)}</p>
             <div class="button-row">
               <button type="button" class="secondary" data-edit="${project.project_id}">Edit</button>
-              <button type="button" class="danger" data-delete="${project.project_id}">Archive</button>
+              <button type="button" class="danger" data-delete="${project.project_id}">Delete</button>
             </div>
           </div>
         `,
@@ -108,23 +153,26 @@ document.addEventListener("DOMContentLoaded", () => {
     if (editId) {
       try {
         const project = await ClientHub.apiRequest(`/projects/get-project/${editId}`);
-        form.elements.project_id.value = project.project_id;
-        form.elements.title.value = project.title || "";
-        form.elements.client_id.value = project.client_id || "";
-        form.elements.type.value = project.type || "fixed";
-        form.elements.status.value = project.status || "draft";
-        form.elements.start_date.value = project.start_date
+        editForm.elements.project_id.value = project.project_id;
+        editForm.elements.title.value = project.title || "";
+        editForm.elements.client_id.value = project.client_id || "";
+        editForm.elements.type.value = project.type || "fixed";
+        editForm.elements.status.value = project.status || "draft";
+        editForm.elements.start_date.value = project.start_date
           ? String(project.start_date).slice(0, 10)
           : "";
-        form.elements.deadline.value = project.deadline
+        editForm.elements.deadline.value = project.deadline
           ? String(project.deadline).slice(0, 10)
           : "";
-        form.elements.budget.value = project.budget || "";
-        form.elements.budget_currency.value = project.budget_currency || "EUR";
-        form.elements.tags.value = project.tags || "";
-        form.elements.description.value = project.description || "";
-        form.elements.brief.value = project.brief || "";
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        editForm.elements.budget.value = project.budget || "";
+        editForm.elements.paid_amount.value = "0";
+        editForm.elements.budget_currency.value = project.budget_currency || "EUR";
+        editForm.elements.tags.value = project.tags || "";
+        editForm.elements.description.value = project.description || "";
+        editForm.elements.brief.value = project.brief || "";
+        currentAlreadyPaid = Number(project.paid_amount || 0);
+        updateAmountPreview();
+        openEditModal();
       } catch (error) {
         ClientHub.showMessage(error.message, "error");
       }
@@ -132,11 +180,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (deleteId) {
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this project?",
+      );
+      if (!confirmed) {
+        return;
+      }
+
       try {
         await ClientHub.apiRequest(`/projects/delete-project/${deleteId}`, {
           method: "DELETE",
         });
-        ClientHub.showMessage("Project archived successfully.", "success");
+        ClientHub.showMessage("Project deleted successfully.", "success");
         await loadProjects();
       } catch (error) {
         ClientHub.showMessage(error.message, "error");
@@ -146,6 +201,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
   clearButton.addEventListener("click", resetForm);
   refreshButton.addEventListener("click", loadProjects);
+  cancelEditButton.addEventListener("click", closeEditModal);
+  editModal.addEventListener("click", (event) => {
+    if (event.target === editModal) {
+      closeEditModal();
+    }
+  });
+
+  editForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    ClientHub.clearMessage();
+
+    const projectId = editForm.elements.project_id.value;
+    const formData = ClientHub.createFormData(editForm);
+    formData.set("owner_id", ClientHub.getAdminId());
+
+    try {
+      await ClientHub.apiRequest(`/projects/update-project/${projectId}`, {
+        method: "PUT",
+        body: formData,
+      });
+
+      closeEditModal();
+      ClientHub.showMessage("Project updated successfully.", "success");
+      await loadProjects();
+    } catch (error) {
+      ClientHub.showMessage(error.message, "error");
+    }
+  });
+
+  editForm.elements.budget.addEventListener("input", updateAmountPreview);
+  editForm.elements.paid_amount.addEventListener("input", updateAmountPreview);
+  editForm.elements.budget_currency.addEventListener("input", updateAmountPreview);
 
   loadClientOptions();
   loadProjects();

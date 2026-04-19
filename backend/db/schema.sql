@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS admins (
 
 CREATE TABLE IF NOT EXISTS clients (
   client_id SERIAL PRIMARY KEY,
+  owner_id INTEGER REFERENCES admins(admin_id) ON DELETE CASCADE,
   name VARCHAR(150) NOT NULL,
   email VARCHAR(150) NOT NULL,
   phone VARCHAR(50) NOT NULL,
@@ -56,3 +57,26 @@ CREATE TABLE IF NOT EXISTS invoice (
   paid_amount NUMERIC(12, 2) DEFAULT 0,
   payment_date TIMESTAMP DEFAULT NOW()
 );
+
+ALTER TABLE clients
+ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES admins(admin_id) ON DELETE CASCADE;
+
+UPDATE clients
+SET owner_id = (
+  SELECT admin_id
+  FROM admins
+  ORDER BY admin_id
+  LIMIT 1
+)
+WHERE owner_id IS NULL
+  AND EXISTS (SELECT 1 FROM admins);
+
+UPDATE projects
+SET owner_id = (
+  SELECT admin_id
+  FROM admins
+  ORDER BY admin_id
+  LIMIT 1
+)
+WHERE owner_id IS NULL
+  AND EXISTS (SELECT 1 FROM admins);

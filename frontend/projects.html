@@ -118,6 +118,105 @@
       </div>
     </main>
 
+    <div class="modal-backdrop" id="editProjectModal">
+      <div class="modal-box">
+        <h2>Edit project</h2>
+        <p class="simple-text">This popup shows the total amount, already paid amount, new payment amount, and remaining amount.</p>
+
+        <form id="editProjectForm">
+          <input type="hidden" name="project_id" />
+
+          <div class="amount-box">
+            <p><strong>Total amount:</strong> <span id="editTotalAmountText">0</span></p>
+            <p><strong>Already paid:</strong> <span id="editAlreadyPaidText">0</span></p>
+            <p><strong>Remaining amount:</strong> <span id="editRemainingAmountText">0</span></p>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              Title
+              <input type="text" name="title" required />
+            </label>
+            <label>
+              Client
+              <select name="client_id" id="editClientSelect" required>
+                <option value="">Select client</option>
+              </select>
+            </label>
+            <label>
+              Type
+              <select name="type" required>
+                <option value="fixed">fixed</option>
+                <option value="retainer">retainer</option>
+                <option value="hourly">hourly</option>
+              </select>
+            </label>
+            <label>
+              Status
+              <select name="status" required>
+                <option value="draft">draft</option>
+                <option value="active">active</option>
+                <option value="on_hold">on_hold</option>
+                <option value="completed">completed</option>
+                <option value="cancelled">cancelled</option>
+              </select>
+            </label>
+            <label>
+              Start date
+              <input type="date" name="start_date" />
+            </label>
+            <label>
+              Deadline
+              <input type="date" name="deadline" />
+            </label>
+            <label>
+              Total amount
+              <input type="number" name="budget" min="0" step="0.01" required />
+            </label>
+            <label>
+              New paid amount
+              <input type="number" name="paid_amount" min="0" step="0.01" value="0" />
+            </label>
+            <label>
+              Already paid amount
+              <input type="number" id="editAlreadyPaidInput" class="read-only" readonly />
+            </label>
+            <label>
+              Remaining amount
+              <input type="number" id="editRemainingAmountInput" class="read-only" readonly />
+            </label>
+            <label>
+              Currency
+              <input type="text" name="budget_currency" value="EUR" />
+            </label>
+            <label>
+              Tags
+              <input type="text" name="tags" />
+            </label>
+            <label class="full">
+              Description
+              <textarea name="description"></textarea>
+            </label>
+            <label class="full">
+              Brief
+              <textarea name="brief"></textarea>
+            </label>
+            <label class="full">
+              Cover image
+              <input type="file" name="cover_image_url" accept="image/*" />
+            </label>
+          </div>
+
+          <p class="form-help">If nothing was paid before, the edit form will simply show the total amount with already paid as 0.</p>
+
+          <div class="button-row end">
+            <button type="button" id="cancelProjectEdit" class="secondary">Cancel</button>
+            <button type="submit">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script src="/frontend/shared.js"></script>
     <script src="/frontend/projects.js"></script>
   </body>
