@@ -22,9 +22,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentInvoice = null;
 
-  const downloadInvoicePdf = async (invoiceId) => {
+  const downloadInvoicePdf = async (projectId, invoiceId) => {
+    if (!projectId) {
+      ClientHub.showMessage("Project not found for this invoice.", "error");
+      return;
+    }
+
     try {
-      const response = await fetch(`/invoice/download/${invoiceId}`, {
+      const response = await fetch(`/invoice/download/project/${projectId}`, {
         headers: {
           Authorization: `Bearer ${ClientHub.getToken()}`,
         },
@@ -42,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `invoice-${invoiceId}.pdf`;
+      link.download = `invoice-${invoiceId || projectId}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -125,7 +130,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     Number(invoice.remaining_amount || 0) <= 0 ? "disabled" : ""
                   }
                   >Pay</button>
-                  <button type="button" class="secondary" data-pdf="${invoice.invoice_id}">PDF</button>
+                  <button
+                    type="button"
+                    class="secondary"
+                    data-pdf="${invoice.invoice_id || ""}"
+                    data-pdf-project="${invoice.project_id}"
+                  >PDF</button>
                 </div>
               </td>
             </tr>
@@ -141,10 +151,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   tableBody.addEventListener("click", (event) => {
     const pdfId = event.target.getAttribute("data-pdf");
+    const pdfProjectId = event.target.getAttribute("data-pdf-project");
     const payButton = event.target.closest("[data-pay]");
 
-    if (pdfId) {
-      downloadInvoicePdf(pdfId);
+    if (pdfProjectId) {
+      downloadInvoicePdf(pdfProjectId, pdfId);
       return;
     }
 
