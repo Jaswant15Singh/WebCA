@@ -1,11 +1,33 @@
 import PDFDocument from "pdfkit";
 
+const invoiceSummaryQuery = `
+  SELECT
+    MAX(i.invoice_id) AS invoice_id,
+    p.project_id,
+    p.owner_id,
+    p.client_id,
+    c.name,
+    c.email AS client_email,
+    p.title,
+    p.budget_currency,
+    COALESCE(p.budget, 0) AS total_amount,
+    COALESCE(SUM(i.paid_amount), 0) AS paid_amount,
+    GREATEST(COALESCE(p.budget, 0) - COALESCE(SUM(i.paid_amount), 0), 0) AS remaining_amount,
+    MAX(i.payment_date) AS payment_date
+  FROM projects p
+  INNER JOIN clients c ON c.client_id = p.client_id
+  LEFT JOIN invoice i ON i.project_id = p.project_id AND i.owner_id = p.owner_id
+`;
+
 const invoiceController = {
   getAllInvoices: async (req, res) => {
     try {
       const ownerId = req.admin.id;
       const invoices = await db.executeQuery(
-        "SELECT i.invoice_id, i.owner_id, i.total_amount, i.paid_amount, c.name, p.title, i.payment_date, p.project_id, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.owner_id = $1 ORDER BY i.invoice_id DESC",
+        `${invoiceSummaryQuery}
+         WHERE p.owner_id = $1
+         GROUP BY p.project_id, p.owner_id, p.client_id, c.name, c.email, p.title, p.budget_currency, p.budget
+         ORDER BY MAX(i.payment_date) DESC NULLS LAST, p.project_id DESC`,
         [ownerId],
       );
       res.status(200).json(invoices);
@@ -35,7 +57,11 @@ const invoiceController = {
     const { id } = req.params;
     try {
       const invoice = await db.executeQuery(
-        "SELECT i.invoice_id, i.owner_id, i.total_amount, i.paid_amount, c.name, p.title, i.payment_date, p.project_id, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.invoice_id = $1 AND i.owner_id = $2",
+        `${invoiceSummaryQuery}
+         WHERE p.project_id = (
+           SELECT project_id FROM invoice WHERE invoice_id = $1 AND owner_id = $2
+         ) AND p.owner_id = $2
+         GROUP BY p.project_id, p.owner_id, p.client_id, c.name, c.email, p.title, p.budget_currency, p.budget`,
         [id, ownerId],
       );
       if (invoice.length === 0) {
@@ -52,7 +78,11 @@ const invoiceController = {
 
     try {
       const invoice = await db.executeQuery(
-        "SELECT i.invoice_id, i.owner_id, i.total_amount, i.paid_amount, i.payment_date, c.name AS client_name, c.email AS client_email, p.title AS project_title, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.invoice_id = $1 AND i.owner_id = $2",
+        `${invoiceSummaryQuery}
+         WHERE p.project_id = (
+           SELECT project_id FROM invoice WHERE invoice_id = $1 AND owner_id = $2
+         ) AND p.owner_id = $2
+         GROUP BY p.project_id, p.owner_id, p.client_id, c.name, c.email, p.title, p.budget_currency, p.budget`,
         [id, ownerId],
       );
 
@@ -74,8 +104,8 @@ const invoiceController = {
       doc.fontSize(24).text("Client Hub Invoice", { underline: true });
       doc.moveDown();
       doc.fontSize(12).text(`Invoice ID: ${item.invoice_id}`);
-      doc.text(`Project: ${item.project_title}`);
-      doc.text(`Client: ${item.client_name}`);
+      doc.text(`Project: ${item.title}`);
+      doc.text(`Client: ${item.name}`);
       doc.text(`Client Email: ${item.client_email || "Not provided"}`);
       doc.text(`Payment Date: ${new Date(item.payment_date).toLocaleDateString("en-IE")}`);
       doc.moveDown();
@@ -89,6 +119,64 @@ const invoiceController = {
       doc.end();
     } catch (error) {
       res.status(500).json({ message: error.publicMessage || "Error downloading invoice" });
+    }
+  },
+  confirmInvoicePayment: async (req, res) => {
+    const ownerId = req.admin.id;
+    const { project_id, amount } = req.body;
+
+    try {
+      const invoice = await db.executeQuery(
+        `${invoiceSummaryQuery}
+         WHERE p.project_id = $1 AND p.owner_id = $2
+         GROUP BY p.project_id, p.owner_id, p.client_id, c.name, c.email, p.title, p.budget_currency, p.budget`,
+        [project_id, ownerId],
+      );
+
+      if (invoice.length === 0) {
+        return res.status(404).json({ message: "Project invoice not found" });
+      }
+
+      const current = invoice[0];
+      const paymentAmount = Number(amount || 0);
+      const remainingAmount = Number(current.remaining_amount || 0);
+
+      if (paymentAmount <= 0) {
+        return res.status(400).json({ message: "Payment amount must be greater than zero" });
+      }
+
+      if (paymentAmount > remainingAmount) {
+        return res.status(400).json({ message: "Payment amount cannot be greater than remaining amount" });
+      }
+
+      const nextRemainingAmount = Math.max(remainingAmount - paymentAmount, 0);
+
+      await db.executeQuery(
+        "INSERT INTO invoice (owner_id, project_id, client_id, total_amount, paid_amount, payment_date) VALUES ($1, $2, $3, $4, $5, NOW())",
+        [ownerId, current.project_id, current.client_id, current.total_amount, paymentAmount],
+      );
+      await db.executeQuery(
+        "INSERT INTO project_logs (project_id, total_amount, paid_amount) VALUES ($1, $2, $3)",
+        [current.project_id, current.total_amount, paymentAmount],
+      );
+      await db.executeQuery(
+        "UPDATE projects SET remaining_amount = $1, updated_at = NOW() WHERE project_id = $2 AND owner_id = $3",
+        [nextRemainingAmount, current.project_id, ownerId],
+      );
+
+      res.status(200).json({
+        message: "Amount paid successfully",
+        payment: {
+          project_id: current.project_id,
+          title: current.title,
+          amount_paid: paymentAmount,
+          total_paid: Number(current.paid_amount || 0) + paymentAmount,
+          remaining_amount: nextRemainingAmount,
+          budget_currency: current.budget_currency,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.publicMessage || "Error confirming payment" });
     }
   },
 };
