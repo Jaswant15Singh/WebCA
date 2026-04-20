@@ -33,9 +33,9 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({extended:true}))
 global.db=new DatabaseClass();
-app.get("/", (_req, res) => {
-    res.redirect("/frontend/index.html");
-});
+// app.get("/", (_req, res) => {
+//     res.redirect("./index.html");
+// });
 app.use("/admin", adminRoutes);
 app.use("/clients", clientRoutes);
 app.use("/projects", projectRoutes);

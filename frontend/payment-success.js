@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     ClientHub.showMessage(response.message, "success");
     window.alert("Amount paid successfully.");
     setTimeout(() => {
-      window.location.href = "/frontend/invoices.html";
+      window.location.href = "./invoices.html";
     }, 1200);
   } catch (error) {
     ClientHub.showMessage(error.message, "error");
