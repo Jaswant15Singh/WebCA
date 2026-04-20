@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ClientHub.clearMessage();
 
     const body = Object.fromEntries(new FormData(form).entries());
-
+    console.log("fixed")
     try {
       const data = await ClientHub.apiRequest("/admin/login", {
         method: "POST",
