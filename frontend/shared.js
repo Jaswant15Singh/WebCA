@@ -1,5 +1,5 @@
 (function () {
-  const FRONTEND_BASE = "/frontend";
+  const FRONTEND_BASE = "./";
   const LOGIN_PAGE = `${FRONTEND_BASE}/index.html`;
   const SIGNUP_PAGE = `${FRONTEND_BASE}/signup.html`;
   const DASHBOARD_PAGE = `${FRONTEND_BASE}/dashboard.html`;
