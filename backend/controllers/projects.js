@@ -122,8 +122,8 @@ const projectsController = {
         [result[0].project_id, budgetValue, paidAmountValue],
       );
       await db.executeQuery(
-        "INSERT INTO invoice (project_id,client_id,total_amount,paid_amount,payment_date) VALUES ($1,$2,$3,$4,NOW())",
-        [result[0].project_id, client_id, budgetValue, paidAmountValue],
+        "INSERT INTO invoice (owner_id, project_id, client_id, total_amount, paid_amount, payment_date) VALUES ($1,$2,$3,$4,$5,NOW())",
+        [ownerId, result[0].project_id, client_id, budgetValue, paidAmountValue],
       );
       res
         .status(201)
@@ -191,6 +191,14 @@ const projectsController = {
       const additionalPaid = paid_amount ? parseFloat(paid_amount) : 0;
       const budgetValue = budget ? parseFloat(budget) : parseFloat(current.budget || 0);
       const currentPaid = parseFloat(current.paid_amount || 0);
+      const currentRemaining = Math.max(parseFloat(current.remaining_amount || 0), 0);
+
+      if (additionalPaid > currentRemaining) {
+        return res.status(400).json({
+          error: "New paid amount cannot be greater than remaining amount.",
+        });
+      }
+
       const remainingAmount = Math.max(budgetValue - currentPaid - additionalPaid, 0);
       const avatar_url = req.file
         ? `/uploads/projects/${req.file.filename}`
@@ -224,7 +232,7 @@ const projectsController = {
       };
       
       await db.executeQuery(
-        "UPDATE projects SET title = $1, description = $2, client_id = $3, owner_id = $4, type = $5, status = $6, tags = $7, start_date = $8, deadline = $9, budget = $10, budget_currency = $11, cover_image_url = $12, brief = $13, remaining_amount = $14,updated_at = NOW() WHERE project_id = $15",
+        "UPDATE projects SET title = $1, description = $2, client_id = $3, owner_id = $4, type = $5, status = $6, tags = $7, start_date = $8, deadline = $9, budget = $10, budget_currency = $11, cover_image_url = $12, brief = $13, remaining_amount = $14,updated_at = NOW() WHERE project_id = $15 AND owner_id = $16",
         [
           updatedProject.title,
           updatedProject.description,
@@ -240,13 +248,14 @@ const projectsController = {
           updatedProject.cover_image_url,
           updatedProject.brief,
           updatedProject.remaining_amount,
-          id
+          id,
+          ownerId,
         ],
       );
       if (additionalPaid > 0) {
         await db.executeQuery(
-          "INSERT INTO invoice (project_id,client_id,total_amount,paid_amount,payment_date) VALUES ($1,$2,$3,$4,NOW())",
-          [id, updatedProject.client_id, updatedProject.budget, additionalPaid],
+          "INSERT INTO invoice (owner_id, project_id, client_id, total_amount, paid_amount, payment_date) VALUES ($1,$2,$3,$4,$5,NOW())",
+          [ownerId, id, updatedProject.client_id, updatedProject.budget, additionalPaid],
         );
         await db.executeQuery(
           "INSERT INTO project_logs (project_id,total_amount,paid_amount) VALUES ($1,$2,$3)",

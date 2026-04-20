@@ -75,8 +75,16 @@ const clientControllers = {
         avatar_url: avatar_url || existingClient[0].avatar_url,
       }; 
       await db.executeQuery(
-        "UPDATE clients SET name=$1, email=$2, phone=$3, address=$4, avatar_url=$5, updated_at=NOW() WHERE client_id=$6",
-        [updatedClient.name, updatedClient.email, updatedClient.phone, updatedClient.address, updatedClient.avatar_url, client_id],
+        "UPDATE clients SET name=$1, email=$2, phone=$3, address=$4, avatar_url=$5, updated_at=NOW() WHERE client_id=$6 AND owner_id = $7",
+        [
+          updatedClient.name,
+          updatedClient.email,
+          updatedClient.phone,
+          updatedClient.address,
+          updatedClient.avatar_url,
+          client_id,
+          ownerId,
+        ],
       );
       res.status(200).json({ message: "Client updated successfully" });
     } catch (error) {

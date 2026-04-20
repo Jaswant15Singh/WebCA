@@ -5,7 +5,7 @@ const invoiceController = {
     try {
       const ownerId = req.admin.id;
       const invoices = await db.executeQuery(
-        "SELECT i.invoice_id, i.total_amount, i.paid_amount, c.name, p.title, i.payment_date, p.project_id, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE p.owner_id = $1 ORDER BY i.invoice_id DESC",
+        "SELECT i.invoice_id, i.owner_id, i.total_amount, i.paid_amount, c.name, p.title, i.payment_date, p.project_id, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.owner_id = $1 ORDER BY i.invoice_id DESC",
         [ownerId],
       );
       res.status(200).json(invoices);
@@ -19,7 +19,7 @@ const invoiceController = {
     const { id } = req.params;
     try {
       const invoice = await db.executeQuery(
-        "SELECT i.invoice_id, i.total_amount, i.paid_amount, c.name, p.title, i.payment_date, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.project_id = $1 AND p.owner_id = $2 ORDER BY i.invoice_id DESC",
+        "SELECT i.invoice_id, i.owner_id, i.total_amount, i.paid_amount, c.name, p.title, i.payment_date, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.project_id = $1 AND i.owner_id = $2 ORDER BY i.invoice_id DESC",
         [id, ownerId],
       );
       if (invoice.length === 0) {
@@ -35,7 +35,7 @@ const invoiceController = {
     const { id } = req.params;
     try {
       const invoice = await db.executeQuery(
-        "SELECT i.invoice_id, i.total_amount, i.paid_amount, c.name, p.title, i.payment_date, p.project_id, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.invoice_id = $1 AND p.owner_id = $2",
+        "SELECT i.invoice_id, i.owner_id, i.total_amount, i.paid_amount, c.name, p.title, i.payment_date, p.project_id, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.invoice_id = $1 AND i.owner_id = $2",
         [id, ownerId],
       );
       if (invoice.length === 0) {
@@ -52,7 +52,7 @@ const invoiceController = {
 
     try {
       const invoice = await db.executeQuery(
-        "SELECT i.invoice_id, i.total_amount, i.paid_amount, i.payment_date, c.name AS client_name, c.email AS client_email, p.title AS project_title, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.invoice_id = $1 AND p.owner_id = $2",
+        "SELECT i.invoice_id, i.owner_id, i.total_amount, i.paid_amount, i.payment_date, c.name AS client_name, c.email AS client_email, p.title AS project_title, p.budget_currency FROM invoice i INNER JOIN clients c ON i.client_id = c.client_id INNER JOIN projects p ON i.project_id = p.project_id WHERE i.invoice_id = $1 AND i.owner_id = $2",
         [id, ownerId],
       );
 
