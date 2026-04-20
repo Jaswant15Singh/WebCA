@@ -213,6 +213,15 @@ document.addEventListener("DOMContentLoaded", () => {
     ClientHub.clearMessage();
 
     const projectId = editForm.elements.project_id.value;
+    const totalAmount = Number(editForm.elements.budget.value || 0);
+    const newPaidAmount = Number(editForm.elements.paid_amount.value || 0);
+    const availableRemaining = Math.max(totalAmount - currentAlreadyPaid, 0);
+
+    if (newPaidAmount > availableRemaining) {
+      window.alert("New paid amount cannot be greater than remaining amount.");
+      return;
+    }
+
     const formData = ClientHub.createFormData(editForm);
     formData.set("owner_id", ClientHub.getAdminId());
 

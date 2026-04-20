@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS project_logs (
 
 CREATE TABLE IF NOT EXISTS invoice (
   invoice_id SERIAL PRIMARY KEY,
+  owner_id INTEGER REFERENCES admins(admin_id) ON DELETE CASCADE,
   project_id INTEGER REFERENCES projects(project_id) ON DELETE CASCADE,
   client_id INTEGER REFERENCES clients(client_id) ON DELETE CASCADE,
   total_amount NUMERIC(12, 2) DEFAULT 0,
@@ -59,6 +60,9 @@ CREATE TABLE IF NOT EXISTS invoice (
 );
 
 ALTER TABLE clients
+ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES admins(admin_id) ON DELETE CASCADE;
+
+ALTER TABLE invoice
 ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES admins(admin_id) ON DELETE CASCADE;
 
 UPDATE clients
@@ -80,3 +84,9 @@ SET owner_id = (
 )
 WHERE owner_id IS NULL
   AND EXISTS (SELECT 1 FROM admins);
+
+UPDATE invoice i
+SET owner_id = p.owner_id
+FROM projects p
+WHERE i.project_id = p.project_id
+  AND i.owner_id IS NULL;
