@@ -74,16 +74,14 @@ const invoiceController = {
   },
   downloadInvoicePdf: async (req, res) => {
     const ownerId = req.admin.id;
-    const { id } = req.params;
+    const { project_id } = req.params;
 
     try {
       const invoice = await db.executeQuery(
         `${invoiceSummaryQuery}
-         WHERE p.project_id = (
-           SELECT project_id FROM invoice WHERE invoice_id = $1 AND owner_id = $2
-         ) AND p.owner_id = $2
+         WHERE p.project_id = $1 AND p.owner_id = $2
          GROUP BY p.project_id, p.owner_id, p.client_id, c.name, c.email, p.title, p.budget_currency, p.budget`,
-        [id, ownerId],
+        [project_id, ownerId],
       );
 
       if (invoice.length === 0) {
@@ -96,7 +94,7 @@ const invoiceController = {
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename=invoice-${item.invoice_id}.pdf`,
+        `attachment; filename=invoice-project-${item.project_id}.pdf`,
       );
 
       doc.pipe(res);

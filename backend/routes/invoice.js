@@ -5,6 +5,6 @@ import authMiddleware from "../middlewares/auth.js";
 router.get("/all-invoices", authMiddleware, invoiceController.getAllInvoices);
 router.get("/invoice-by-project/:id", authMiddleware, invoiceController.getInvoiceByProjects);
 router.get("/invoice-by-id/:id", authMiddleware, invoiceController.getInvoiceById);
-router.get("/download/:id", authMiddleware, invoiceController.downloadInvoicePdf);
+router.get("/download/project/:project_id", authMiddleware, invoiceController.downloadInvoicePdf);
 router.post("/confirm-payment", authMiddleware, invoiceController.confirmInvoicePayment);
 export default router;
