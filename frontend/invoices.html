@@ -43,13 +43,55 @@
                 <th>Project</th>
                 <th>Total</th>
                 <th>Paid</th>
+                <th>Remaining</th>
                 <th>Date</th>
-                <th>PDF</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="invoiceTableBody"></tbody>
           </table>
         </section>
+
+        <div class="modal-backdrop" id="paymentModal">
+          <div class="modal-box">
+            <h2>Pay Amount</h2>
+            <p class="simple-text">Choose the amount to pay, then continue to Razorpay.</p>
+
+            <div class="amount-box">
+              <p><strong>Project:</strong> <span id="paymentProjectName">-</span></p>
+              <p><strong>Total amount:</strong> <span id="paymentTotalText">0</span></p>
+              <p><strong>Already paid:</strong> <span id="paymentPaidText">0</span></p>
+              <p><strong>Remaining amount:</strong> <span id="paymentRemainingText">0</span></p>
+            </div>
+
+            <form id="paymentForm">
+              <input type="hidden" name="project_id" />
+              <input type="hidden" name="invoice_id" />
+
+              <div class="form-grid">
+                <label>
+                  Payment amount
+                  <input type="number" name="amount" min="1" step="0.01" required />
+                </label>
+                <label>
+                  Amount to be paid now
+                  <input type="text" id="paymentAmountPreview" class="read-only" readonly />
+                </label>
+              </div>
+
+              <p class="form-help">Use the full remaining amount or type your own smaller amount.</p>
+
+              <div class="button-row">
+                <button type="button" class="secondary" id="fillRemainingAmount">Pay Full Remaining</button>
+              </div>
+
+              <div class="button-row end">
+                <button type="button" class="secondary" id="cancelPayment">Cancel</button>
+                <button type="submit">Go To Razorpay</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </main>
 
