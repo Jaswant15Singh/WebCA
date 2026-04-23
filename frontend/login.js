@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
         username: data.admin?.username || body.username,
       });
 
-      window.location.href = ClientHub.DASHBOARD_PAGE;
+      window.location.href = `./dashboard.html`;
     } catch (error) {
       ClientHub.showMessage(error.message, "error");
     }

@@ -112,7 +112,7 @@
       headers.set("Authorization", `Bearer ${getToken()}`);
     }
 
-    const response = await fetch(`https://webca-1.onrender.com${url}`, {
+    const response = await fetch(`http://localhost:5000${url}`, {
       ...options,
       headers,
     });
@@ -190,7 +190,7 @@
       button.addEventListener("click", () => {
         clearSession();
         setFlash("You are logged out.", "success");
-        window.location.href = LOGIN_PAGE;
+        window.location.href = `./index.html`;
       });
     });
   };
