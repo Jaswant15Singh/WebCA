@@ -112,7 +112,7 @@
       headers.set("Authorization", `Bearer ${getToken()}`);
     }
 
-    const response = await fetch(`http://webca-1.onrender.com${url}`, {
+    const response = await fetch(`https://webca-1.onrender.com${url}`, {
       ...options,
       headers,
     });
