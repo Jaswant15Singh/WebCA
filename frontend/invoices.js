@@ -29,11 +29,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const response = await fetch(`/invoice/download/project/${projectId}`, {
-        headers: {
-          Authorization: `Bearer ${ClientHub.getToken()}`,
+      const response = await fetch(
+        `https://webca-1.onrender.com/invoice/download/project/${projectId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${ClientHub.getToken()}`,
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         const type = response.headers.get("content-type") || "";
