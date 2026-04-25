@@ -5,13 +5,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   ClientHub.updateAuthText();
 
+  const ITEMS_PER_PAGE = 2;
+
   const form = document.getElementById("clientForm");
   const list = document.getElementById("clientList");
+  const pagination = document.getElementById("clientPagination");
   const clearButton = document.getElementById("clearClientForm");
   const refreshButton = document.getElementById("refreshClients");
   const editModal = document.getElementById("editClientModal");
   const editForm = document.getElementById("editClientForm");
   const cancelEditButton = document.getElementById("cancelClientEdit");
+
+  let allClients = [];
+  let currentPage = 1;
 
   const resetForm = () => {
     form.reset();
@@ -28,38 +34,82 @@ document.addEventListener("DOMContentLoaded", () => {
     editForm.elements.client_id.value = "";
   };
 
-  const renderClients = (clients) => {
-    if (!clients.length) {
-      list.innerHTML = '<div class="box">No clients found.</div>';
+  const buildPagination = (totalItems) => {
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+    if (totalPages <= 1) {
+      pagination.innerHTML = "";
       return;
     }
 
-    list.innerHTML = clients
-      .map(
-        (client) => `
-          <div class="list-item">
-            <div class="list-head">
-              <div>
-                <h3>${client.name}</h3>
-                <p class="simple-text">${client.email} | ${client.phone}</p>
+    const pageButtons = Array.from({ length: totalPages }, (_, index) => {
+      const pageNumber = index + 1;
+      return `
+        <button
+          type="button"
+          data-page="${pageNumber}"
+          class="${pageNumber === currentPage ? "active" : ""}"
+        >
+          ${pageNumber}
+        </button>
+      `;
+    }).join("");
+
+    pagination.innerHTML = `
+      <button type="button" data-page="${currentPage - 1}" ${currentPage === 1 ? "disabled" : ""}>Previous</button>
+      ${pageButtons}
+      <button type="button" data-page="${currentPage + 1}" ${currentPage === totalPages ? "disabled" : ""}>Next</button>
+    `;
+  };
+
+  const renderClients = () => {
+    if (!allClients.length) {
+      list.innerHTML = '<div class="box">No clients found.</div>';
+      pagination.innerHTML = "";
+      return;
+    }
+
+    const totalPages = Math.ceil(allClients.length / ITEMS_PER_PAGE);
+    currentPage = Math.min(currentPage, totalPages);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const rows = allClients.slice(start, start + ITEMS_PER_PAGE);
+
+    list.innerHTML = rows
+      .map((client) => {
+        const imageUrl = ClientHub.getAssetUrl(client.avatar_url);
+        const media = imageUrl
+          ? `<div class="item-media"><img src="${imageUrl}" alt="${client.name}" /></div>`
+          : '<div class="item-media placeholder">No image</div>';
+
+        return `
+          <div class="list-item with-media">
+            ${media}
+            <div class="item-body">
+              <div class="list-head">
+                <div>
+                  <h3>${client.name}</h3>
+                  <p class="simple-text">${client.email} | ${client.phone}</p>
+                </div>
+                <span class="tag">Client ${client.client_id}</span>
               </div>
-              <span class="tag">Client ${client.client_id}</span>
-            </div>
-            <p>${client.address}</p>
-            <div class="button-row">
-              <button type="button" class="secondary" data-edit="${client.client_id}">Edit</button>
-              <button type="button" class="danger" data-delete="${client.client_id}">Delete</button>
+              <p>${client.address}</p>
+              <div class="button-row">
+                <button type="button" class="secondary" data-edit="${client.client_id}">Edit</button>
+                <button type="button" class="danger" data-delete="${client.client_id}">Delete</button>
+              </div>
             </div>
           </div>
-        `,
-      )
+        `;
+      })
       .join("");
+
+    buildPagination(allClients.length);
   };
 
   const loadClients = async () => {
     try {
-      const clients = await ClientHub.apiRequest("/clients/get-clients");
-      renderClients(clients);
+      allClients = await ClientHub.apiRequest("/clients/get-clients");
+      renderClients();
     } catch (error) {
       ClientHub.showMessage(error.message, "error");
     }
@@ -81,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       resetForm();
+      currentPage = 1;
       ClientHub.showMessage("Client saved successfully.", "success");
       await loadClients();
     } catch (error) {
@@ -125,6 +176,17 @@ document.addEventListener("DOMContentLoaded", () => {
         ClientHub.showMessage(error.message, "error");
       }
     }
+  });
+
+  pagination.addEventListener("click", (event) => {
+    const page = Number(event.target.getAttribute("data-page"));
+
+    if (!page) {
+      return;
+    }
+
+    currentPage = page;
+    renderClients();
   });
 
   clearButton.addEventListener("click", resetForm);

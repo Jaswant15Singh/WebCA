@@ -5,8 +5,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   ClientHub.updateAuthText();
 
+  const ITEMS_PER_PAGE = 2;
+
   const form = document.getElementById("projectForm");
   const list = document.getElementById("projectList");
+  const pagination = document.getElementById("projectPagination");
   const clearButton = document.getElementById("clearProjectForm");
   const refreshButton = document.getElementById("refreshProjects");
   const clientSelect = document.getElementById("clientSelect");
@@ -19,8 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const editRemainingAmountText = document.getElementById("editRemainingAmountText");
   const editAlreadyPaidInput = document.getElementById("editAlreadyPaidInput");
   const editRemainingAmountInput = document.getElementById("editRemainingAmountInput");
+
   let cachedClients = [];
+  let allProjects = [];
   let currentAlreadyPaid = 0;
+  let currentPage = 1;
 
   const resetForm = () => {
     form.reset();
@@ -78,44 +84,88 @@ document.addEventListener("DOMContentLoaded", () => {
     editRemainingAmountText.textContent = ClientHub.formatCurrency(remainingAmount, currency);
   };
 
-  const renderProjects = (projects) => {
+  const buildPagination = (totalItems) => {
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+    if (totalPages <= 1) {
+      pagination.innerHTML = "";
+      return;
+    }
+
+    const pageButtons = Array.from({ length: totalPages }, (_, index) => {
+      const pageNumber = index + 1;
+      return `
+        <button
+          type="button"
+          data-page="${pageNumber}"
+          class="${pageNumber === currentPage ? "active" : ""}"
+        >
+          ${pageNumber}
+        </button>
+      `;
+    }).join("");
+
+    pagination.innerHTML = `
+      <button type="button" data-page="${currentPage - 1}" ${currentPage === 1 ? "disabled" : ""}>Previous</button>
+      ${pageButtons}
+      <button type="button" data-page="${currentPage + 1}" ${currentPage === totalPages ? "disabled" : ""}>Next</button>
+    `;
+  };
+
+  const renderProjects = () => {
     const uniqueMap = new Map();
-    projects.forEach((project) => uniqueMap.set(String(project.project_id), project));
+    allProjects.forEach((project) => uniqueMap.set(String(project.project_id), project));
     const rows = [...uniqueMap.values()];
 
     if (!rows.length) {
       list.innerHTML = '<div class="box">No projects found.</div>';
+      pagination.innerHTML = "";
       return;
     }
 
-    list.innerHTML = rows
-      .map(
-        (project) => `
-          <div class="list-item">
-            <div class="list-head">
-              <div>
-                <h3>${project.title}</h3>
-                <p class="simple-text">${project.type || "n/a"} | ${project.status || "n/a"}</p>
+    const totalPages = Math.ceil(rows.length / ITEMS_PER_PAGE);
+    currentPage = Math.min(currentPage, totalPages);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const visibleRows = rows.slice(start, start + ITEMS_PER_PAGE);
+
+    list.innerHTML = visibleRows
+      .map((project) => {
+        const imageUrl = ClientHub.getAssetUrl(project.cover_image_url);
+        const media = imageUrl
+          ? `<div class="item-media"><img src="${imageUrl}" alt="${project.title}" /></div>`
+          : '<div class="item-media placeholder">No image</div>';
+
+        return `
+          <div class="list-item with-media">
+            ${media}
+            <div class="item-body">
+              <div class="list-head">
+                <div>
+                  <h3>${project.title}</h3>
+                  <p class="simple-text">${project.type || "n/a"} | ${project.status || "n/a"}</p>
+                </div>
+                <span class="tag">${ClientHub.formatCurrency(project.budget, project.budget_currency)}</span>
               </div>
-              <span class="tag">${ClientHub.formatCurrency(project.budget, project.budget_currency)}</span>
-            </div>
-            <p>${project.description || "No description added."}</p>
-            <p class="simple-text">Client: ${project.client_name || project.client_id} | Deadline: ${ClientHub.formatDate(project.deadline)}</p>
-            <p class="simple-text">Paid: ${ClientHub.formatCurrency(project.paid_amount, project.budget_currency)} | Remaining: ${ClientHub.formatCurrency(project.remaining_amount, project.budget_currency)}</p>
-            <div class="button-row">
-              <button type="button" class="secondary" data-edit="${project.project_id}">Edit</button>
-              <button type="button" class="danger" data-delete="${project.project_id}">Delete</button>
+              <p>${project.description || "No description added."}</p>
+              <p class="simple-text">Client: ${project.client_name || project.client_id} | Deadline: ${ClientHub.formatDate(project.deadline)}</p>
+              <p class="simple-text">Paid: ${ClientHub.formatCurrency(project.paid_amount, project.budget_currency)} | Remaining: ${ClientHub.formatCurrency(project.remaining_amount, project.budget_currency)}</p>
+              <div class="button-row">
+                <button type="button" class="secondary" data-edit="${project.project_id}">Edit</button>
+                <button type="button" class="danger" data-delete="${project.project_id}">Delete</button>
+              </div>
             </div>
           </div>
-        `,
-      )
+        `;
+      })
       .join("");
+
+    buildPagination(rows.length);
   };
 
   const loadProjects = async () => {
     try {
-      const projects = await ClientHub.apiRequest("/projects/get-projects");
-      renderProjects(projects);
+      allProjects = await ClientHub.apiRequest("/projects/get-projects");
+      renderProjects();
     } catch (error) {
       ClientHub.showMessage(error.message, "error");
     }
@@ -139,6 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       resetForm();
+      currentPage = 1;
       ClientHub.showMessage("Project saved successfully.", "success");
       await loadProjects();
     } catch (error) {
@@ -197,6 +248,17 @@ document.addEventListener("DOMContentLoaded", () => {
         ClientHub.showMessage(error.message, "error");
       }
     }
+  });
+
+  pagination.addEventListener("click", (event) => {
+    const page = Number(event.target.getAttribute("data-page"));
+
+    if (!page) {
+      return;
+    }
+
+    currentPage = page;
+    renderProjects();
   });
 
   clearButton.addEventListener("click", resetForm);
