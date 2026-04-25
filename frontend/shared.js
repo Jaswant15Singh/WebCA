@@ -4,6 +4,7 @@
   const SIGNUP_PAGE = `${FRONTEND_BASE}/signup.html`;
   const DASHBOARD_PAGE = `${FRONTEND_BASE}/dashboard.html`;
   const FLASH_KEY = "clientHubFlash";
+  const API_BASE = window.location.origin;
 
   const keys = {
     token: "clientHubToken",
@@ -185,6 +186,22 @@
     }
   };
 
+  const getAssetUrl = (value) => {
+    if (!value) {
+      return "";
+    }
+
+    if (/^https?:\/\//i.test(value)) {
+      return value;
+    }
+
+    if (value.startsWith("/")) {
+      return `${API_BASE}${value}`;
+    }
+
+    return `${API_BASE}/${value}`;
+  };
+
   const bindLogoutButtons = () => {
     document.querySelectorAll("[data-logout]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -222,5 +239,6 @@
     createFormData,
     formatDate,
     formatCurrency,
+    getAssetUrl,
   };
 })();
