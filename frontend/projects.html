@@ -26,12 +26,12 @@
       <div class="page">
         <div class="message" data-message></div>
 
-        <div class="two-column">
-          <section class="box">
+        <div class="two-column split-layout">
+          <section class="box panel-box form-panel">
             <h2>Project form</h2>
             <p class="simple-text">Create or update projects here.</p>
 
-            <form id="projectForm">
+            <form id="projectForm" class="panel-scroll">
               <input type="hidden" name="project_id" />
               <div class="form-grid">
                 <label>
@@ -107,12 +107,13 @@
             </form>
           </section>
 
-          <section class="box">
+          <section class="box panel-box list-panel">
             <h2>Project list</h2>
             <div class="button-row">
               <button type="button" id="refreshProjects">Refresh</button>
             </div>
-            <div id="projectList" class="list"></div>
+            <div id="projectList" class="list panel-scroll"></div>
+            <div id="projectPagination" class="pagination"></div>
           </section>
         </div>
       </div>

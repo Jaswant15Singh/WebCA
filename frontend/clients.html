@@ -26,12 +26,12 @@
       <div class="page">
         <div class="message" data-message></div>
 
-        <div class="two-column">
-          <section class="box">
+        <div class="two-column split-layout">
+          <section class="box panel-box form-panel">
             <h2>Client form</h2>
             <p class="simple-text">This page uses the client CRUD backend routes.</p>
 
-            <form id="clientForm">
+            <form id="clientForm" class="panel-scroll">
               <input type="hidden" name="client_id" />
               <div class="form-grid">
                 <label>
@@ -63,12 +63,13 @@
             </form>
           </section>
 
-          <section class="box">
+          <section class="box panel-box list-panel">
             <h2>Client list</h2>
             <div class="button-row">
               <button type="button" id="refreshClients">Refresh</button>
             </div>
-            <div id="clientList" class="list"></div>
+            <div id="clientList" class="list panel-scroll"></div>
+            <div id="clientPagination" class="pagination"></div>
           </section>
         </div>
       </div>
