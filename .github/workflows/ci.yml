@@ -37,5 +37,5 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             npm install
-            pm2 restart webca-backend
+            pm2 restart webca
             pm2 save
